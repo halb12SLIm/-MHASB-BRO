@@ -1,0 +1,6 @@
+{
+  "name": "Mohasib Salim Pro",
+  "description": "Accounting application for managing clients, invoices, and debts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
