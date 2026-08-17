@@ -95,27 +95,27 @@ export default function App() {
                     alt="Watermark" 
                     className="w-[400px] h-[400px] object-contain"
                     style={{
-                        opacity: 1
+                        opacity: 0.15
                     }}
                 />
             </div>
         )}
 
         <div className="relative z-10">
-          <header className="bg-[var(--color-primary)] shadow-md text-white">
-            <nav className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-              <div className='flex items-center gap-2'>
-                <button onClick={() => setIsDrawerOpen(!isDrawerOpen)} className='p-2 hover:bg-[var(--color-secondary)] rounded-lg z-[1000] cursor-pointer'>
-                    <Menu />
+          <header className="bg-[var(--color-primary)] shadow-lg text-white">
+            <nav className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+              <div className='flex items-center gap-4'>
+                <button onClick={() => setIsDrawerOpen(!isDrawerOpen)} className='p-2 hover:bg-black/10 rounded-xl z-[1000] cursor-pointer transition-colors'>
+                    <Menu size={24} />
                 </button>
-                <div className='flex items-center gap-3'>
+                <div className='flex items-center gap-4'>
                   {storeSettings.logoBase64 && (
-                      <img src={storeSettings.logoBase64} alt="Logo" className="w-[45px] h-[45px] object-contain" />
+                      <img src={storeSettings.logoBase64} alt="Logo" className="w-[50px] h-[50px] object-contain bg-white rounded-full p-1" />
                   )}
                   <div className='flex flex-col'>
-                      <h1 className="text-xl font-bold cursor-pointer text-white" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>محاسب سليم برو</h1>
-                      <div className="bg-white rounded-[6px] px-2 py-0.5 mt-0.5">
-                        <span className="text-[10px] text-black font-medium leading-none">تم تصميم هذا التطبيق من قبل المهندس خالد سليم أبو محمد</span>
+                      <h1 className="text-2xl font-bold cursor-pointer text-white" onClick={() => setIsDrawerOpen(!isDrawerOpen)}>محاسب سليم برو</h1>
+                      <div className="bg-white rounded-full px-3 py-0.5 mt-1 shadow-sm">
+                        <span className="text-[11px] text-[var(--color-secondary)] font-bold leading-none">تم تصميم هذا التطبيق من قبل المهندس خالد سليم أبو محمد</span>
                       </div>
                   </div>
                 </div>
@@ -146,7 +146,7 @@ export default function App() {
                 </div>
                 
                 {/* Drawer Menu Items */}
-                <div className="flex-1 overflow-y-auto py-2 px-2">
+                <div className="flex-1 overflow-y-auto py-4 px-3">
                   {navItems.map((item) => (
                     <button
                       key={item.id}
@@ -155,14 +155,14 @@ export default function App() {
                         setSelectedClientId(null); 
                         setIsDrawerOpen(false); 
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 my-1 rounded-xl transition-all duration-200 ${
+                      className={`w-full flex items-center gap-4 px-5 py-3.5 my-1.5 rounded-2xl transition-all duration-300 font-medium ${
                         activeSection === item.id
-                          ? 'bg-[var(--color-accent)] text-[var(--color-secondary)] font-bold'
-                          : 'text-[var(--color-secondary)] hover:bg-black/5'
+                          ? 'bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30'
+                          : 'text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5 hover:text-[var(--color-primary)]'
                       }`}
                     >
-                      <item.icon size={18} />
-                      <span className='text-[14px]'>{item.label}</span>
+                      <item.icon size={20} />
+                      <span className='text-[15px]'>{item.label}</span>
                     </button>
                   ))}
                 </div>
