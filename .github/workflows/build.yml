@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build APK
 
 on:
   push:
@@ -15,5 +15,7 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm install
-      - name: Build
+      - name: Build Web
         run: npm run build
+      - name: Build Status
+        run: echo "Web build successful. Note: This action does not generate an APK automatically. APK generation requires a full Android build environment (Capacitor + Android SDK) configured in the repository."
