@@ -18,4 +18,7 @@ jobs:
       - name: Build Web
         run: npm run build
       - name: Build Status
-        run: echo "Web build successful. Note: This action does not generate an APK automatically. APK generation requires a full Android build environment (Capacitor + Android SDK) configured in the repository."
+        run: |
+          echo "Web build successful."
+          echo "Note: This action does not generate an APK automatically."
+          echo "APK generation requires a full Android build environment."
