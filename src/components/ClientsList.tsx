@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import { Client } from '../types';
-import { User, Phone, DollarSign } from 'lucide-react';
+import { User, Phone, DollarSign, Trash2, Check, X } from 'lucide-react';
 
 interface Props {
   clients: Client[];
+  onDeleteClient: (id: string) => void;
 }
 
-export default function ClientsList({ clients }: Props) {
+export default function ClientsList({ clients, onDeleteClient }: Props) {
+  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -33,12 +37,43 @@ export default function ClientsList({ clients }: Props) {
                   </p>
                 </div>
               </div>
-              <div className="text-left">
-                <p className="text-sm text-gray-500">الرصيد</p>
-                <p className="font-bold text-lg flex items-center gap-1 text-[var(--color-danger)]">
-                  <DollarSign size={16} />
-                  {client.totalDebt.toFixed(2)}
-                </p>
+              <div className="flex items-center gap-4">
+                <div className="text-left">
+                  <p className="text-sm text-gray-500">الرصيد</p>
+                  <p className="font-bold text-lg flex items-center gap-1 text-[var(--color-danger)]">
+                    <DollarSign size={16} />
+                    {client.totalDebt.toFixed(2)}
+                  </p>
+                </div>
+                {deleteClientId === client.id ? (
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => {
+                        onDeleteClient(client.id!);
+                        setDeleteClientId(null);
+                      }}
+                      className="text-green-600 p-2 rounded-full hover:bg-green-50 transition-colors"
+                      title="تأكيد الحذف"
+                    >
+                      <Check size={20} />
+                    </button>
+                    <button 
+                      onClick={() => setDeleteClientId(null)}
+                      className="text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                      title="إلغاء"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setDeleteClientId(client.id!)}
+                    className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors"
+                    title="حذف العميل"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                )}
               </div>
             </div>
           ))}

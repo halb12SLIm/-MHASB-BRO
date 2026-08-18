@@ -1,15 +1,16 @@
 import { Invoice, calculateInvoiceTotal, PaymentStatus, StoreSettings, Client } from '../types';
 import { printHighResInvoice } from '../utils/pdfGenerator';
 import { shareInvoiceToWhatsApp } from '../utils/whatsappGenerator';
-import { Printer, MessageSquare } from 'lucide-react';
+import { Printer, MessageSquare, Trash2 } from 'lucide-react';
 
 interface Props {
   invoices: Invoice[];
   clients: Client[];
   storeSettings: StoreSettings;
+  onDeleteInvoice: (id: string) => void;
 }
 
-export default function InvoiceLog({ invoices, clients, storeSettings }: Props) {
+export default function InvoiceLog({ invoices, clients, storeSettings, onDeleteInvoice }: Props) {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">سجل الفواتير</h2>
@@ -43,6 +44,9 @@ export default function InvoiceLog({ invoices, clients, storeSettings }: Props) 
                     </button>
                     <button onClick={() => shareInvoiceToWhatsApp(inv, client)} className="text-green-600">
                         <MessageSquare size={20} />
+                    </button>
+                    <button onClick={() => onDeleteInvoice(inv.id!)} className="text-red-600">
+                        <Trash2 size={20} />
                     </button>
                 </td>
               </tr>

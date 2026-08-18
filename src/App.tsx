@@ -2,8 +2,8 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { useState } from 'react';
-import { Users, FileText, ListOrdered, DollarSign, Plus, Menu, X, Settings, Printer, Wallet, Gift } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Users, FileText, ListOrdered, DollarSign, Plus, Menu, X, Settings, Printer, Wallet, Gift, Trash2, Euro, Coins } from 'lucide-react';
 import ClientsList from './components/ClientsList';
 import CreateInvoice from './components/CreateInvoice';
 import InvoiceLog from './components/InvoiceLog';
@@ -12,7 +12,7 @@ import DebtManagement from './components/DebtManagement';
 import ClientDebtDetail from './components/ClientDebtDetail';
 import Raffle from './components/Raffle';
 import { AddClient } from './components/AddClient';
-import { Client, Invoice, PaymentStatus, calculateInvoiceRemaining, StoreSettings, Currency } from './types';
+import { Client, Invoice, PaymentStatus, calculateInvoiceRemaining, calculateInvoiceTotal, StoreSettings, Currency } from './types';
 import { AppHealthMonitor } from './components/AppHealthMonitor';
 
 type Section = 'clients' | 'invoices' | 'invoice-log' | 'debts' | 'add-client' | 'settings' | 'raffle';
@@ -39,6 +39,22 @@ export default function App() {
   });
 
   const handleAddPayment = (clientId: string, amount: number, note: string) => {
+    let remainingAmount = amount;
+    
+    // 1. Update Invoices
+    setInvoices(prev => prev.map(inv => {
+      if (inv.clientId === clientId && remainingAmount > 0) {
+        const remainingInvoiceDebt = calculateInvoiceRemaining(inv);
+        if (remainingInvoiceDebt > 0) {
+          const paymentForInvoice = Math.min(remainingInvoiceDebt, remainingAmount);
+          remainingAmount -= paymentForInvoice;
+          return { ...inv, paidAmount: inv.paidAmount + paymentForInvoice };
+        }
+      }
+      return inv;
+    }));
+
+    // 2. Update Client Total Debt
     setClients(prev => prev.map(c => {
       if (c.id === clientId) {
         return {
@@ -49,6 +65,25 @@ export default function App() {
       }
       return c;
     }));
+  };
+
+  const totalDebtByCurrency = useMemo(() => {
+    const totals: Record<Currency, number> = {
+      [Currency.USD]: 0,
+      [Currency.EUR]: 0,
+      [Currency.TRY]: 0,
+    };
+    invoices.forEach(invoice => {
+      const remaining = calculateInvoiceRemaining(invoice);
+      if (invoice.currency in totals) {
+        totals[invoice.currency as Currency] += Math.max(0, remaining);
+      }
+    });
+    return totals;
+  }, [invoices]);
+
+  const handleDeleteClient = (clientId: string) => {
+    setClients(prev => prev.filter(c => c.id !== clientId));
   };
 
   const handleAddClient = (client: Client) => {
@@ -68,6 +103,10 @@ export default function App() {
       }));
     }
     setActiveSection('invoice-log');
+  };
+
+  const handleDeleteInvoice = (invoiceId: string) => {
+    setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
   };
 
   const navItems = [
@@ -171,10 +210,25 @@ export default function App() {
           )}
 
           <main className="max-w-7xl mx-auto p-4">
-            {activeSection === 'clients' && <ClientsList clients={clients} />}
+            {activeSection === 'clients' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {[ { currency: Currency.USD, label: 'ديون دولار', icon: DollarSign }, { currency: Currency.EUR, label: 'ديون يورو', icon: Euro }, { currency: Currency.TRY, label: 'ديون تركي', icon: Coins } ].map(({ currency, label, icon: Icon }) => (
+                  <div key={currency} className="p-6 bg-white rounded-3xl shadow-sm border border-red-100 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500 font-medium">{label}</p>
+                      <p className="text-2xl font-bold text-[var(--color-danger)] mt-1">{totalDebtByCurrency[currency].toFixed(2)}</p>
+                    </div>
+                    <div className="p-3 bg-[var(--color-danger)]/10 rounded-2xl text-[var(--color-danger)]">
+                      <Icon size={20} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {activeSection === 'clients' && <ClientsList clients={clients} onDeleteClient={handleDeleteClient} />}
             {activeSection === 'add-client' && <AddClient onClientAdded={handleAddClient} onClose={() => setActiveSection('clients')} />}
             {activeSection === 'invoices' && <CreateInvoice clients={clients} onSaveInvoice={handleSaveInvoice} storeSettings={storeSettings} />}
-            {activeSection === 'invoice-log' && <InvoiceLog invoices={invoices} clients={clients} storeSettings={storeSettings} />}
+            {activeSection === 'invoice-log' && <InvoiceLog invoices={invoices} clients={clients} storeSettings={storeSettings} onDeleteInvoice={handleDeleteInvoice} />}
             {activeSection === 'raffle' && <Raffle clients={clients} />}
             {activeSection === 'debts' && (
               selectedClientId ? (

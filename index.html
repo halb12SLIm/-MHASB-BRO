@@ -1,18 +1,693 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-    <meta name="description" content="An application built with Google AI Studio." />
-    <meta property="og:title" content="My Google AI Studio App" />
-    <meta property="og:description" content="An application built with Google AI Studio." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تطبيق إدارة الفواتير والعملاء - مناحل سليم</title>
+<style>
+  :root {
+    --primary-green: #2e7d32;
+    --dark-green: #1b5e20;
+    --light-green: #e8f5e9;
+    --accent-yellow: #fbc02d;
+    --light-yellow: #fffde7;
+    --earth-brown: #5d4037;
+    --accent-red: #c62828;
+    --light-red: #ffebee;
+    --dark-text: #212121;
+    --border-color: #a5d6a7;
+  }
 
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+
+  body {
+    background-color: #f4f6f8;
+    color: var(--dark-text);
+    direction: rtl;
+    padding: 15px;
+  }
+
+  /* Header & Navigation Bar */
+  header {
+    background: linear-gradient(135deg, var(--dark-green), var(--primary-green));
+    color: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  header h1 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+
+  nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+  .nav-btn {
+    background-color: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s;
+  }
+
+  .nav-btn.active, .nav-btn:hover {
+    background-color: var(--accent-yellow);
+    color: var(--dark-text);
+    border-color: var(--accent-yellow);
+  }
+
+  /* Container Panels */
+  .view-panel {
+    display: none;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid var(--border-color);
+  }
+
+  .view-panel.active { display: block; }
+
+  .section-title {
+    color: var(--earth-brown);
+    font-size: 18px;
+    border-bottom: 2px solid var(--accent-yellow);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Forms & Controls */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+
+  .form-group label {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--earth-brown);
+  }
+
+  .form-control {
+    padding: 9px 12px;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .form-control:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 2px rgba(46,125,50,0.2);
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: 0.2s;
+  }
+
+  .btn-primary { background-color: var(--primary-green); color: white; }
+  .btn-primary:hover { background-color: var(--dark-green); }
+  .btn-accent { background-color: var(--accent-yellow); color: var(--dark-text); }
+  .btn-accent:hover { background-color: #f57f17; color: white; }
+  .btn-whatsapp { background-color: #25d366; color: white; }
+  .btn-whatsapp:hover { background-color: #128c7e; }
+
+  /* Tables */
+  .table-responsive { overflow-x: auto; margin-top: 15px; }
+
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  table.data-table th {
+    background-color: var(--primary-green);
+    color: white;
+    padding: 10px;
+    text-align: right;
+    border: 1px solid var(--dark-green);
+  }
+
+  table.data-table td {
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+  }
+
+  table.data-table tbody tr:nth-child(even) { background-color: var(--light-yellow); }
+
+  /* Number highlights */
+  .num-positive { color: var(--primary-green); font-weight: bold; }
+  .num-negative { color: var(--accent-red); font-weight: bold; }
+  .num-neutral { color: #f57f17; font-weight: bold; }
+
+  /* Summary Box */
+  .summary-bar {
+    background-color: var(--light-green);
+    border: 1px solid var(--primary-green);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .summary-item { font-size: 15px; font-weight: bold; }
+
+  /* Printable Area Styling */
+  #printableInvoice {
+    background: white;
+    padding: 25px;
+    border: 2px solid var(--earth-brown);
+    border-radius: 8px;
+    margin-top: 20px;
+  }
+
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px double var(--primary-green);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+  }
+
+  .print-header-col { flex: 1; }
+  .print-header-center { text-align: center; }
+  .print-header-left { text-align: left; }
+
+  .logo-box {
+    width: 90px;
+    height: 90px;
+    border: 2px dashed var(--accent-yellow);
+    background-color: #fffde7;
+    margin: 0 auto 5px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--earth-brown);
+    border-radius: 50%;
+  }
+
+  .brand-title { color: var(--primary-green); font-size: 20px; font-weight: bold; }
+  .brand-sub { color: var(--earth-brown); font-size: 11px; font-weight: bold; }
+
+  .party-title { font-size: 13px; font-weight: bold; color: var(--primary-green); margin-bottom: 4px; }
+  .party-details { font-size: 12px; line-height: 1.5; color: #333; }
+
+  table.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+  }
+
+  table.print-table th {
+    background-color: var(--primary-green) !important;
+    color: white !important;
+    padding: 8px;
+    border: 1px solid var(--dark-green);
+    font-size: 13px;
+  }
+
+  table.print-table td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  table.print-table tbody tr:nth-child(even) {
+    background-color: var(--light-yellow) !important;
+  }
+
+  .print-footer-terms {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: var(--light-red);
+    border-right: 4px solid var(--accent-red);
+    font-size: 11px;
+    color: var(--dark-text);
+  }
+
+  /* PRINT MEDIA SETTINGS */
+  @media print {
+    body * { visibility: hidden; }
+    #printableInvoice, #printableInvoice * { visibility: visible; }
+    #printableInvoice {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      border: none;
+      padding: 0;
+    }
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="no-print">
+    <h1>🍯 مناحل سليم - نظام الفواتير والعملاء</h1>
+    <nav>
+      <button class="nav-btn active" onclick="switchTab('invoiceTab')">📄 إنشاء فاتورة</button>
+      <button class="nav-btn" onclick="switchTab('customersTab')">👤 إضافة وإدارة العملاء</button>
+      <button class="nav-btn" onclick="switchTab('myInfoTab')">⚙️ معلوماتي الشخصية</button>
+      <button class="nav-btn" onclick="switchTab('searchTab')">🔍 بحث الفواتير</button>
+    </nav>
+  </header>
+
+  <!-- 1. INVOICE CREATION TAB -->
+  <div id="invoiceTab" class="view-panel active">
+    <div class="section-title">
+      <span>إنشاء فاتورة جديدة</span>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>اسم التاجر / العميل</label>
+        <select id="invCustomerSelect" class="form-control" onchange="updateCustomerPrintDetails()">
+          <option value="">اختر العميل...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>نوع التاجر</label>
+        <select id="invCustomerType" class="form-control">
+          <option value="عميل">عميل</option>
+          <option value="مورد">مورد</option>
+          <option value="جملة">جملة</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>تاريخ الفاتورة</label>
+        <input type="date" id="invDate" class="form-control" value="2026-08-18">
+      </div>
+    </div>
+
+    <!-- Items Form -->
+    <div style="background: var(--light-green); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+      <div class="form-grid">
+        <div class="form-group" style="grid-column: span 2;">
+          <label>الصنف</label>
+          <input type="text" id="itemDescription" class="form-control" placeholder="أدخل اسم الصنف">
+        </div>
+        <div class="form-group">
+          <label>الكمية</label>
+          <input type="number" id="itemQty" class="form-control" value="1">
+        </div>
+        <div class="form-group">
+          <label>السعر</label>
+          <input type="number" id="itemPrice" class="form-control" value="0">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addItemToInvoice()">➕ أضف الصنف للفاتورة</button>
+    </div>
+
+    <!-- Invoice Items Table -->
+    <div class="table-responsive">
+      <table class="data-table" id="invoiceTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>الصنف</th>
+            <th>الكمية</th>
+            <th>السعر</th>
+            <th>الإجمالي</th>
+            <th class="no-print">إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceTableBody">
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Total Bar -->
+    <div class="summary-bar">
+      <div class="summary-item">مجموع الكميات: <span id="totalQtySum" class="num-neutral">0</span></div>
+      <div class="summary-item">الإجمالي الكلي: <span id="totalAmountSum" class="num-positive">0</span> TL</div>
+      <div class="no-print" style="display: flex; gap: 8px;">
+        <button class="btn btn-accent" onclick="previewAndPrint()">👁️ معاينة وطباعة الفاتورة</button>
+        <button class="btn btn-whatsapp" onclick="sendWhatsApp()">💬 إرسال عبر الواتساب</button>
+      </div>
+    </div>
+
+    <!-- PRINT / PREVIEW SECTION -->
+    <div id="printableInvoice" class="no-print">
+      <div class="print-header">
+        <div class="print-header-col">
+          <div class="party-title">📌 معلومات البائع:</div>
+          <div class="party-details">
+            <strong id="printMyBrand">عسل السليم</strong><br>
+            <span id="printMyTagline">عسل السليم من أنقى وأجود انواع العسل الطبيعي في تركيا</span><br>
+            <strong>الإدارة:</strong> <span id="printMyOwner">خالد سليم</span><br>
+            <strong>العنوان:</strong> <span id="printMyAddress">انطاليا / تركيا</span><br>
+            <strong>الهاتف:</strong> <span id="printMyPhone">0939959738</span>
+          </div>
+        </div>
+
+        <div class="print-header-col print-header-center">
+          <div class="logo-box" id="logoPlaceholder">[ اللوجو ]</div>
+          <div class="brand-title">عسل السليم</div>
+          <div class="brand-sub">فاتورة مبيعات</div>
+        </div>
+
+        <div class="print-header-col print-header-left">
+          <div class="party-title">👤 معلومات العميل / التاجر:</div>
+          <div class="party-details">
+            <strong>الاسم:</strong> <span id="printCustName">-</span><br>
+            <strong>نوع التاجر:</strong> <span id="printCustType">-</span><br>
+            <strong>التاريخ:</strong> <span id="printInvDate">2026-08-18</span><br>
+          </div>
+        </div>
+      </div>
+
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>م</th>
+            <th>الصنف</th>
+            <th>الكمية</th>
+            <th>السعر</th>
+            <th>الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody id="printTableBody"></tbody>
+      </table>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; font-weight: bold;">
+        <div style="border: 1px solid var(--primary-green); padding: 8px; border-radius: 5px; width: 48%;">
+          <div>إجمالي الفاتورة: <span class="num-positive" id="printGrandTotal">0</span> TL</div>
+        </div>
+      </div>
+
+      <div class="print-footer-terms">
+        📌 <strong>تنبيه وشروط التعامل:</strong><br>
+        نشكر ثقتكم وتعاملك مع <strong>منحلة سليم</strong>.
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ADD & MANAGE CUSTOMERS TAB -->
+  <div id="customersTab" class="view-panel">
+    <div class="section-title">
+      <span>👤 ميزة إضافة وإدارة العملاء</span>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>اسم العميل / التاجر</label>
+        <input type="text" id="custNameInput" class="form-control" placeholder="أدخل اسم العميل الجديد">
+      </div>
+      <div class="form-group">
+        <label>نوع التاجر</label>
+        <select id="custTypeInput" class="form-control">
+          <option value="عميل">عميل</option>
+          <option value="مورد">مورد</option>
+          <option value="جملة">جملة</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>رقم الهاتف / الواتساب</label>
+        <input type="text" id="custPhoneInput" class="form-control" placeholder="05xxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label>العنوان / المدينة</label>
+        <input type="text" id="custAddressInput" class="form-control" placeholder="المدينة / المنطقة">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="addNewCustomer()">💾 حفظ العميل الجديد</button>
+
+    <div class="table-responsive" style="margin-top: 20px;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>اسم العميل</th>
+            <th>نوع التاجر</th>
+            <th>الهاتف</th>
+            <th>العنوان</th>
+          </tr>
+        </thead>
+        <tbody id="customersTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 3. MY INFO TAB -->
+  <div id="myInfoTab" class="view-panel">
+    <div class="section-title">
+      <span>⚙️ ميزة معلوماتي (بيانات الفاتورة والطباعة)</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>اسم المنحلة / العلامة التجارية</label>
+        <input type="text" id="myBrandInput" class="form-control" value="عسل السليم">
+      </div>
+      <div class="form-group">
+        <label>الشعار اللفظي (الوصف)</label>
+        <input type="text" id="myTaglineInput" class="form-control" value="عسل السليم من أنقى وأجود انواع العسل الطبيعي في تركيا">
+      </div>
+      <div class="form-group">
+        <label>اسم صاحب العمل / المدير</label>
+        <input type="text" id="myOwnerInput" class="form-control" value="خالد سليم">
+      </div>
+      <div class="form-group">
+        <label>رقم الهاتف</label>
+        <input type="text" id="myPhoneInput" class="form-control" value="0939959738">
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>العنوان</label>
+        <input type="text" id="myAddressInput" class="form-control" value="انطاليا / تركيا">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveMyInfo()">💾 حفظ وتحديث معلوماتي</button>
+  </div>
+
+  <!-- 4. SEARCH TAB -->
+  <div id="searchTab" class="view-panel">
+    <div class="section-title">
+      <span>🔍 بحث وإدارة الفواتير</span>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>العميل</th>
+              <th>الإجمالي</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody id="invoiceLogBody">
+            <!-- سيتم إضافة الفواتير هنا -->
+          </tbody>
+        </table>
+    </div>
+  </div>
+
+  <!-- JavaScript Functions -->
+  <script>
+    let customers = JSON.parse(localStorage.getItem('customers')) || [];
+    let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function updateCustomerPrintDetails() {
+      const custSelect = document.getElementById('invCustomerSelect');
+      document.getElementById('printCustName').innerText = custSelect.value || '-';
+    }
+
+    function addItemToInvoice() {
+      const desc = document.getElementById('itemDescription').value;
+      const qty = parseFloat(document.getElementById('itemQty').value) || 0;
+      const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+
+      if (!desc) { alert('يرجى كتابة اسم الصنف!'); return; }
+
+      const total = qty * price;
+      const tbody = document.getElementById('invoiceTableBody');
+      const rowCount = tbody.rows.length + 1;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${rowCount}</td>
+        <td>${desc}</td>
+        <td>${qty}</td>
+        <td class="num-neutral">${price.toLocaleString()}</td>
+        <td class="num-positive">${total.toLocaleString()}</td>
+        <td class="no-print"><button onclick="this.closest('tr').remove(); calculateInvoiceTotal();" style="color:red; cursor:pointer;">❌</button></td>
+      `;
+      tbody.appendChild(tr);
+
+      document.getElementById('itemDescription').value = '';
+      document.getElementById('itemPrice').value = '0';
+      calculateInvoiceTotal();
+    }
+
+    function calculateInvoiceTotal() {
+      const tbody = document.getElementById('invoiceTableBody');
+      let totalQty = 0;
+      let totalAmount = 0;
+
+      Array.from(tbody.rows).forEach(row => {
+        const qty = parseFloat(row.cells[2].innerText) || 0;
+        const total = parseFloat(row.cells[4].innerText.replace(/,/g, '')) || 0;
+        totalQty += qty;
+        totalAmount += total;
+      });
+
+      document.getElementById('totalQtySum').innerText = totalQty;
+      document.getElementById('totalAmountSum').innerText = totalAmount.toLocaleString();
+      document.getElementById('printGrandTotal').innerText = totalAmount.toLocaleString();
+    }
+
+    function previewAndPrint() {
+      const custSelect = document.getElementById('invCustomerSelect');
+      document.getElementById('printCustName').innerText = custSelect.value || 'عميل غير مسمى';
+      document.getElementById('printCustType').innerText = document.getElementById('invCustomerType').value;
+      document.getElementById('printInvDate').innerText = document.getElementById('invDate').value;
+
+      const sourceRows = document.getElementById('invoiceTableBody').rows;
+      const printTbody = document.getElementById('printTableBody');
+      printTbody.innerHTML = '';
+
+      let items = [];
+      Array.from(sourceRows).forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.cells[0].innerText}</td>
+          <td>${row.cells[1].innerText}</td>
+          <td>${row.cells[2].innerText}</td>
+          <td>${row.cells[3].innerText}</td>
+          <td class="num-positive">${row.cells[4].innerText}</td>
+        `;
+        printTbody.appendChild(tr);
+        items.push({
+            desc: row.cells[1].innerText,
+            qty: row.cells[2].innerText,
+            price: row.cells[3].innerText,
+            total: row.cells[4].innerText
+        });
+      });
+
+      // Save Invoice to Log
+      const inv = {
+          id: Date.now(),
+          date: document.getElementById('invDate').value,
+          customer: custSelect.value,
+          total: document.getElementById('totalAmountSum').innerText,
+          items: items
+      };
+      invoices.push(inv);
+      localStorage.setItem('invoices', JSON.stringify(invoices));
+      renderInvoiceLog();
+
+      window.print();
+    }
+
+    function renderInvoiceLog() {
+        const tbody = document.getElementById('invoiceLogBody');
+        tbody.innerHTML = '';
+        invoices.forEach(inv => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${inv.date}</td>
+                <td>${inv.customer}</td>
+                <td>${inv.total}</td>
+                <td><button class="btn btn-primary" onclick="alert('جارٍ العمل على ميزة إعادة الطباعة')">🖨️</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function addNewCustomer() {
+      const name = document.getElementById('custNameInput').value;
+      const type = document.getElementById('custTypeInput').value;
+      const phone = document.getElementById('custPhoneInput').value;
+      const addr = document.getElementById('custAddressInput').value;
+
+      if (!name) { alert('يرجى إدخال اسم العميل'); return; }
+
+      customers.push({name, type, phone, addr});
+      localStorage.setItem('customers', JSON.stringify(customers));
+      
+      const select = document.getElementById('invCustomerSelect');
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.innerText = name;
+      select.appendChild(opt);
+
+      const tbody = document.getElementById('customersTableBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${tbody.rows.length + 1}</td>
+        <td>${name}</td>
+        <td>${type}</td>
+        <td>${phone}</td>
+        <td>${addr}</td>
+      `;
+      tbody.appendChild(tr);
+
+      alert('تمت إضافة العميل بنجاح!');
+      document.getElementById('custNameInput').value = '';
+      document.getElementById('custPhoneInput').value = '';
+      document.getElementById('custAddressInput').value = '';
+    }
+
+    function saveMyInfo() {
+      document.getElementById('printMyBrand').innerText = document.getElementById('myBrandInput').value;
+      document.getElementById('printMyTagline').innerText = document.getElementById('myTaglineInput').value;
+      document.getElementById('printMyOwner').innerText = document.getElementById('myOwnerInput').value;
+      document.getElementById('printMyPhone').innerText = document.getElementById('myPhoneInput').value;
+      document.getElementById('printMyAddress').innerText = document.getElementById('myAddressInput').value;
+      alert('تم تحديث وحفظ معلوماتك بنجاح!');
+    }
+    
+    // Load existing data
+    customers.forEach(c => {
+        const select = document.getElementById('invCustomerSelect');
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.innerText = c.name;
+        select.appendChild(opt);
+    });
+    renderInvoiceLog();
+  </script>
+</body>
+</html>
