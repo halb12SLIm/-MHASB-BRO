@@ -376,7 +376,11 @@
         </div>
 
         <div class="print-header-col print-header-center">
-          <div class="logo-box" id="logoPlaceholder">[ اللوجو ]</div>
+          <div class="logo-box" id="logoPlaceholder" onclick="document.getElementById('logoInput').click()">
+            <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="previewLogo(this)">
+            <img id="logoImg" src="" style="max-width:100%; max-height:100%; display:none; border-radius: 50%;">
+            <span id="logoText">[ اللوجو ]</span>
+          </div>
           <div class="brand-title">عسل السليم</div>
           <div class="brand-sub">فاتورة مبيعات</div>
         </div>
@@ -677,6 +681,19 @@
       document.getElementById('printMyPhone').innerText = document.getElementById('myPhoneInput').value;
       document.getElementById('printMyAddress').innerText = document.getElementById('myAddressInput').value;
       alert('تم تحديث وحفظ معلوماتك بنجاح!');
+    }
+
+    function previewLogo(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.getElementById('logoImg');
+          img.src = e.target.result;
+          img.style.display = 'block';
+          document.getElementById('logoText').style.display = 'none';
+        }
+        reader.readAsDataURL(input.files[0]);
+      }
     }
     
     // Load existing data
