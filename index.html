@@ -258,6 +258,10 @@
     color: var(--dark-text);
   }
 
+  /* Modal */
+  .modal { display: none; position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; padding: 20px; overflow-y: auto; }
+  .modal-content { background: white; border-radius: 12px; padding: 20px; max-width: 800px; margin: 0 auto; }
+
   /* PRINT MEDIA SETTINGS */
   @media print {
     body * { visibility: hidden; }
@@ -284,6 +288,7 @@
       <button class="nav-btn" onclick="switchTab('customersTab')">👤 إضافة وإدارة العملاء</button>
       <button class="nav-btn" onclick="switchTab('myInfoTab')">⚙️ معلوماتي الشخصية</button>
       <button class="nav-btn" onclick="switchTab('searchTab')">🔍 بحث الفواتير</button>
+      <button class="nav-btn" onclick="switchTab('debtTab')">💰 إدارة الديون</button>
     </nav>
   </header>
 
@@ -311,6 +316,14 @@
       <div class="form-group">
         <label>تاريخ الفاتورة</label>
         <input type="date" id="invDate" class="form-control" value="2026-08-18">
+      </div>
+      <div class="form-group">
+        <label>العملة</label>
+        <select id="invCurrency" class="form-control">
+          <option value="USD">دولار ($)</option>
+          <option value="EUR">يورو (€)</option>
+          <option value="TRY">تركي (₺)</option>
+        </select>
       </div>
     </div>
 
@@ -520,17 +533,139 @@
     </div>
   </div>
 
+  <!-- 5. DEBT TAB -->
+  <div id="debtTab" class="view-panel">
+    <div class="section-title">
+      <span>💰 إدارة ديون العملاء</span>
+    </div>
+    <div class="form-grid">
+        <select id="debtCustomerSelect" class="form-control">
+            <option value="">اختر العميل...</option>
+        </select>
+        <input type="number" id="paymentAmount" class="form-control" placeholder="قيمة السداد...">
+        <select id="paymentCurrency" class="form-control">
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="TRY">TRY (₺)</option>
+        </select>
+        <input type="text" id="paymentNote" class="form-control" placeholder="ملاحظات (مثل: دفعة أولى)...">
+        <button class="btn btn-primary" onclick="addPayment()">تسديد دفعة</button>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>العميل</th>
+              <th>إجمالي الفواتير</th>
+              <th>إجمالي السدادات</th>
+              <th>الرصيد المتبقي</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody id="debtTableBody">
+          </tbody>
+        </table>
+    </div>
+  </div>
+
+  <!-- Statement Modal -->
+  <div id="statementModal" class="modal">
+    <div class="modal-content">
+        <h2 id="statementTitle" class="section-title"></h2>
+        <div id="statementBody" class="table-responsive"></div>
+        <button class="btn btn-primary" onclick="closeStatement()">إغلاق</button>
+    </div>
+  </div>
+
   <!-- JavaScript Functions -->
   <script>
     let customers = JSON.parse(localStorage.getItem('customers')) || [];
     let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+    let payments = JSON.parse(localStorage.getItem('payments')) || [];
 
     function switchTab(tabId) {
       document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       event.target.classList.add('active');
+      if (tabId === 'debtTab') renderDebts();
     }
+
+    function addPayment() {
+        const customer = document.getElementById('debtCustomerSelect').value;
+        const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+        const currency = document.getElementById('paymentCurrency').value;
+        const note = document.getElementById('paymentNote').value;
+        if (!customer || amount <= 0) { alert('يرجى اختيار عميل وإدخال مبلغ صحيح!'); return; }
+        payments.push({customer, amount, currency, note, date: new Date().toISOString().split('T')[0]});
+        localStorage.setItem('payments', JSON.stringify(payments));
+        renderDebts();
+        document.getElementById('paymentAmount').value = '';
+        document.getElementById('paymentNote').value = '';
+    }
+
+    function renderDebts() {
+        const tbody = document.getElementById('debtTableBody');
+        const select = document.getElementById('debtCustomerSelect');
+        tbody.innerHTML = '';
+        select.innerHTML = '<option value="">اختر العميل...</option>';
+        
+        customers.forEach(c => {
+            select.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+            
+            const currencies = ['USD', 'EUR', 'TRY'];
+            currencies.forEach(curr => {
+                // Calculate invoices with this specific currency
+                const totalInvoices = invoices.filter(i => i.customer === c.name && i.currency === curr).reduce((sum, i) => 
+                    sum + parseFloat(i.total.replace(/,/g, '')), 0);
+                
+                // Calculate payments with this specific currency
+                const totalPayments = payments.filter(p => p.customer === c.name && p.currency === curr).reduce((sum, p) => sum + p.amount, 0);
+                const balance = totalInvoices - totalPayments;
+                
+                if (totalInvoices > 0 || totalPayments > 0) {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${c.name} (${curr})</td>
+                            <td class="num-positive">${totalInvoices.toLocaleString()}</td>
+                            <td class="num-negative">${totalPayments.toLocaleString()}</td>
+                            <td class="${balance > 0 ? 'num-negative' : 'num-positive'}">${balance.toLocaleString()}</td>
+                            <td><button class="btn btn-primary" onclick="showStatement('${c.name}', '${curr}')">👁️ كشف</button></td>
+                        </tr>
+                    `;
+                }
+            });
+        });
+    }
+
+    function showStatement(customerName, currency) {
+        const modal = document.getElementById('statementModal');
+        const title = document.getElementById('statementTitle');
+        const body = document.getElementById('statementBody');
+        title.innerText = `كشف حساب: ${customerName} (${currency})`;
+        
+        let transactions = [];
+        invoices.filter(i => i.customer === customerName && i.currency === currency).forEach(i => {
+            transactions.push({date: i.date, desc: 'فاتورة: ' + i.items.map(item => item.desc).join(', '), type: 'invoice', amount: parseFloat(i.total.replace(/,/g, ''))});
+        });
+        payments.filter(p => p.customer === customerName && p.currency === currency).forEach(p => {
+            transactions.push({date: p.date, desc: 'سداد: ' + (p.note || ''), type: 'payment', amount: p.amount});
+        });
+        transactions.sort((a,b) => new Date(a.date) - new Date(b.date));
+        
+        let html = '<table class="data-table"><thead><tr><th>التاريخ</th><th>البيان</th><th>مدين (فاتورة)</th><th>دائن (سداد)</th></tr></thead><tbody>';
+        let balance = 0;
+        transactions.forEach(t => {
+            if(t.type === 'invoice') balance += t.amount;
+            else balance -= t.amount;
+            html += `<tr><td>${t.date}</td><td>${t.desc}</td><td class="num-positive">${t.type === 'invoice' ? t.amount.toLocaleString() : ''}</td><td class="num-negative">${t.type === 'payment' ? t.amount.toLocaleString() : ''}</td></tr>`;
+        });
+        html += `</tbody></table><div class="summary-bar">الرصيد المتبقي (${currency}): ${balance.toLocaleString()}</div>`;
+        body.innerHTML = html;
+        modal.style.display = 'block';
+    }
+
+    function closeStatement() { document.getElementById('statementModal').style.display = 'none'; }
 
     function updateCustomerPrintDetails() {
       const custSelect = document.getElementById('invCustomerSelect');
@@ -615,6 +750,7 @@
           id: Date.now(),
           date: document.getElementById('invDate').value,
           customer: custSelect.value,
+          currency: document.getElementById('invCurrency').value,
           total: document.getElementById('totalAmountSum').innerText,
           items: items
       };
@@ -633,11 +769,37 @@
             tr.innerHTML = `
                 <td>${inv.date}</td>
                 <td>${inv.customer}</td>
-                <td>${inv.total}</td>
-                <td><button class="btn btn-primary" onclick="alert('جارٍ العمل على ميزة إعادة الطباعة')">🖨️</button></td>
+                <td>${inv.total} ${inv.currency || ''}</td>
+                <td><button class="btn btn-primary" onclick="printExistingInvoice(${inv.id})">🖨️ طباعة</button></td>
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    function printExistingInvoice(id) {
+        const inv = invoices.find(i => i.id === id);
+        if (!inv) return;
+        
+        // Populate preview
+        document.getElementById('printCustName').innerText = inv.customer;
+        document.getElementById('printInvDate').innerText = inv.date;
+        document.getElementById('printGrandTotal').innerText = inv.total;
+        
+        const printTbody = document.getElementById('printTableBody');
+        printTbody.innerHTML = '';
+        inv.items.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${item.desc}</td>
+                <td>${item.qty}</td>
+                <td>${item.price}</td>
+                <td class="num-positive">${item.total}</td>
+            `;
+            printTbody.appendChild(tr);
+        });
+        
+        window.print();
     }
 
     function addNewCustomer() {
@@ -705,6 +867,7 @@
         select.appendChild(opt);
     });
     renderInvoiceLog();
+    renderDebts();
   </script>
 </body>
 </html>

@@ -5,9 +5,10 @@ import { User, Phone, DollarSign, Trash2, Check, X } from 'lucide-react';
 interface Props {
   clients: Client[];
   onDeleteClient: (id: string) => void;
+  onClientClick: (clientId: string) => void;
 }
 
-export default function ClientsList({ clients, onDeleteClient }: Props) {
+export default function ClientsList({ clients, onDeleteClient, onClientClick }: Props) {
   const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
 
   return (
@@ -25,7 +26,7 @@ export default function ClientsList({ clients, onDeleteClient }: Props) {
         <div className="grid gap-4">
           {clients.map((client) => (
             <div key={client.id} className="bg-white p-4 rounded-lg shadow-sm border border-[var(--color-secondary)] flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onClientClick(client.id!)}>
                 <div className="bg-[var(--color-primary)] bg-opacity-10 p-2 rounded-full text-[var(--color-primary)]">
                   <User size={24} />
                 </div>
@@ -38,7 +39,7 @@ export default function ClientsList({ clients, onDeleteClient }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="text-left">
+                <div className="text-left cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onClientClick(client.id!)}>
                   <p className="text-sm text-gray-500">الرصيد</p>
                   <p className="font-bold text-lg flex items-center gap-1 text-[var(--color-danger)]">
                     <DollarSign size={16} />

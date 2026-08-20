@@ -1,5 +1,5 @@
 import { Invoice, calculateInvoiceTotal, PaymentStatus, StoreSettings, Client } from '../types';
-import { printHighResInvoice } from '../utils/pdfGenerator';
+import { printInvoice } from '../utils/pdfGenerator';
 import { shareInvoiceToWhatsApp } from '../utils/whatsappGenerator';
 import { Printer, MessageSquare, Trash2 } from 'lucide-react';
 
@@ -8,9 +8,10 @@ interface Props {
   clients: Client[];
   storeSettings: StoreSettings;
   onDeleteInvoice: (id: string) => void;
+  onClientClick: (clientId: string) => void;
 }
 
-export default function InvoiceLog({ invoices, clients, storeSettings, onDeleteInvoice }: Props) {
+export default function InvoiceLog({ invoices, clients, storeSettings, onDeleteInvoice, onClientClick }: Props) {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">سجل الفواتير</h2>
@@ -31,7 +32,14 @@ export default function InvoiceLog({ invoices, clients, storeSettings, onDeleteI
               return (
               <tr key={inv.id} className="border-b hover:bg-gray-50">
                 <td className="p-3">{inv.date.toLocaleDateString('ar-SA')}</td>
-                <td className="p-3">{inv.clientName}</td>
+                <td className="p-3">
+                  <button 
+                    onClick={() => inv.clientId && onClientClick(inv.clientId)}
+                    className="text-[var(--color-primary)] hover:underline font-bold"
+                  >
+                    {inv.clientName}
+                  </button>
+                </td>
                 <td className="p-3">{calculateInvoiceTotal(inv).toFixed(2)}</td>
                 <td className="p-3">
                   <span className={`px-2 py-1 rounded text-sm ${inv.status === PaymentStatus.PAID ? 'bg-green-100 text-green-800' : 'bg-[var(--color-accent)] text-white'}`}>
@@ -39,7 +47,7 @@ export default function InvoiceLog({ invoices, clients, storeSettings, onDeleteI
                   </span>
                 </td>
                 <td className="p-3 flex gap-2">
-                    <button onClick={() => printHighResInvoice(inv, storeSettings)} className="text-[var(--color-primary)]">
+                    <button onClick={() => printInvoice(inv, storeSettings)} className="text-[var(--color-primary)]">
                         <Printer size={20} />
                     </button>
                     <button onClick={() => shareInvoiceToWhatsApp(inv, client)} className="text-green-600">

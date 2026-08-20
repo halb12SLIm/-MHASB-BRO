@@ -2,20 +2,23 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import { Auth } from './components/Auth';
 import { Users, FileText, ListOrdered, DollarSign, Plus, Menu, X, Settings, Printer, Wallet, Gift, Trash2, Euro, Coins } from 'lucide-react';
 import ClientsList from './components/ClientsList';
 import CreateInvoice from './components/CreateInvoice';
 import InvoiceLog from './components/InvoiceLog';
 import SettingsComponent from './components/Settings';
 import DebtManagement from './components/DebtManagement';
-import ClientDebtDetail from './components/ClientDebtDetail';
+import ClientProfile from './components/ClientProfile';
 import Raffle from './components/Raffle';
 import { AddClient } from './components/AddClient';
 import { Client, Invoice, PaymentStatus, calculateInvoiceRemaining, calculateInvoiceTotal, StoreSettings, Currency } from './types';
 import { AppHealthMonitor } from './components/AppHealthMonitor';
 
-type Section = 'clients' | 'invoices' | 'invoice-log' | 'debts' | 'add-client' | 'settings' | 'raffle';
+type Section = 'clients' | 'invoices' | 'invoice-log' | 'debts' | 'add-client' | 'settings' | 'raffle' | 'client-profile';
 
 const mockClients: Client[] = [
   { id: '1', name: 'محمد أحمد', phone: '0501234567', totalDebt: 1500.0, paymentHistory: [] },
@@ -27,16 +30,37 @@ const mockInvoices: Invoice[] = [
 ];
 
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user as any);
+        setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
   const [activeSection, setActiveSection] = useState<Section>('clients');
   const [clients, setClients] = useState<Client[]>(mockClients);
   const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [storeSettings, setStoreSettings] = useState<StoreSettings>({ 
-    name: 'محاسب سليم برو', 
-    phone: '', 
-    address: '' 
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => {
+      const saved = localStorage.getItem('storeSettings');
+      return saved ? JSON.parse(saved) : { 
+        name: 'محاسب سليم برو', 
+        phone: '', 
+        address: '' 
+      };
   });
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] font-bold text-[var(--color-primary)]">جاري التحميل...</div>;
+  if (!user) return <Auth />;
+
+  // Update localStorage when storeSettings changes
+  useEffect(() => {
+      localStorage.setItem('storeSettings', JSON.stringify(storeSettings));
+  }, [storeSettings]);
 
   const handleAddPayment = (clientId: string, amount: number, note: string) => {
     let remainingAmount = amount;
@@ -225,23 +249,30 @@ export default function App() {
                 ))}
               </div>
             )}
-            {activeSection === 'clients' && <ClientsList clients={clients} onDeleteClient={handleDeleteClient} />}
+            {activeSection === 'clients' && <ClientsList clients={clients} onDeleteClient={handleDeleteClient} onClientClick={(id) => { setSelectedClientId(id); setActiveSection('client-profile'); }} />}
             {activeSection === 'add-client' && <AddClient onClientAdded={handleAddClient} onClose={() => setActiveSection('clients')} />}
             {activeSection === 'invoices' && <CreateInvoice clients={clients} onSaveInvoice={handleSaveInvoice} storeSettings={storeSettings} />}
-            {activeSection === 'invoice-log' && <InvoiceLog invoices={invoices} clients={clients} storeSettings={storeSettings} onDeleteInvoice={handleDeleteInvoice} />}
+            {activeSection === 'invoice-log' && <InvoiceLog invoices={invoices} clients={clients} storeSettings={storeSettings} onDeleteInvoice={handleDeleteInvoice} onClientClick={(id) => { setSelectedClientId(id); setActiveSection('client-profile'); }} />}
             {activeSection === 'raffle' && <Raffle clients={clients} />}
-            {activeSection === 'debts' && (
-              selectedClientId ? (
-                <ClientDebtDetail 
-                  client={clients.find(c => c.id === selectedClientId) || { id: '', name: 'غير معروف', phone: '', totalDebt: 0, paymentHistory: [] }}
-                  onAddPayment={handleAddPayment}
-                  onBack={() => setSelectedClientId(null)}
-                />
-              ) : (
-                <DebtManagement clients={clients} onSelectClient={setSelectedClientId} />
-              )
+            {activeSection === 'client-profile' && selectedClientId && (
+              <ClientProfile 
+                client={clients.find(c => c.id === selectedClientId) || { id: '', name: 'غير معروف', phone: '', totalDebt: 0, paymentHistory: [] }}
+                invoices={invoices}
+                storeSettings={storeSettings}
+                onAddPayment={handleAddPayment}
+                onBack={() => {
+                  setSelectedClientId(null);
+                  setActiveSection('clients'); // or fallback to a previous section if needed, but 'clients' is safe
+                }}
+              />
             )}
-            {activeSection === 'settings' && <SettingsComponent settings={storeSettings} onSave={setStoreSettings} />}
+            {activeSection === 'debts' && (
+              <DebtManagement clients={clients} onSelectClient={(id) => {
+                setSelectedClientId(id);
+                setActiveSection('client-profile');
+              }} />
+            )}
+            {activeSection === 'settings' && <SettingsComponent settings={storeSettings} onSave={setStoreSettings} user={user} />}
           </main>
         </div>
       </div>

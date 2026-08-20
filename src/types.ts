@@ -60,6 +60,7 @@ export interface Invoice {
   discountType: 'fixed' | 'percentage';
   packagingFee: number;
   previousDebt: number; // Added to capture debt at invoice time
+  note?: string; // Message to customer
 }
 
 // Helper to calculate total invoice amount

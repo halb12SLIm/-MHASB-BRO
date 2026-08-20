@@ -16,6 +16,7 @@ export default function CreateInvoice({ clients, onSaveInvoice, storeSettings }:
   const [packaging, setPackaging] = useState(0);
   const [paidAmount, setPaidAmount] = useState(0);
   const [previousDebt, setPreviousDebt] = useState(0);
+  const [note, setNote] = useState('');
 
   useEffect(() => {
     const client = clients.find(c => c.id === selectedClientId);
@@ -43,7 +44,8 @@ export default function CreateInvoice({ clients, onSaveInvoice, storeSettings }:
     discountValue: 0,
     discountType: 'fixed',
     packagingFee: packaging,
-    previousDebt
+    previousDebt,
+    note
   };
 
   const finalTotal = calculateInvoiceTotal(tempInvoice);
@@ -127,6 +129,12 @@ export default function CreateInvoice({ clients, onSaveInvoice, storeSettings }:
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <input type="number" onFocus={(e) => e.target.value = ''} placeholder="تكاليف التغليف" value={packaging === 0 ? '' : packaging} onChange={(e) => setPackaging(parseFloat(e.target.value) || 0)} className="p-4 border border-[var(--color-secondary)] rounded-xl outline-none text-[12px] bg-[#FDFBF7]" />
         <input type="number" onFocus={(e) => e.target.value = ''} placeholder="المبلغ المدفوع" value={paidAmount === 0 ? '' : paidAmount} onChange={(e) => setPaidAmount(parseFloat(e.target.value) || 0)} className="p-4 border border-[var(--color-secondary)] rounded-xl outline-none text-[12px] bg-[#FDFBF7]" />
+        <textarea 
+          placeholder="رسالة للعميل..." 
+          value={note} 
+          onChange={(e) => setNote(e.target.value)} 
+          className="w-full p-4 border border-[var(--color-secondary)] rounded-xl outline-none text-[12px] bg-[#FDFBF7]"
+        />
       </div>
 
       <div className="border border-[var(--color-secondary)] rounded-2xl p-4 bg-[#FDFBF7]">

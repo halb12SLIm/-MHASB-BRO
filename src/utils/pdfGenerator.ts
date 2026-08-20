@@ -1,15 +1,12 @@
 import html2pdf from "html2pdf.js";
 import { Invoice, StoreSettings } from "../types";
 
-export const printHighResInvoice = (invoice: Invoice, settings: StoreSettings) => {
-  const element = document.createElement('div');
-  element.id = 'invoice-print-template';
-  
+const getInvoiceHTML = (invoice: Invoice, settings: StoreSettings) => {
   const totalAmount = invoice.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
   const finalTotal = totalAmount + invoice.packagingFee;
   const remaining = finalTotal + invoice.previousDebt - invoice.paidAmount;
 
-  element.innerHTML = `
+  return `
     <div style="padding: 20px; font-family: 'Tajawal', sans-serif; direction: rtl; color: #1E1E1E; position: relative;">
       <!-- Header -->
       <div style="text-align: center; margin-bottom: 10px;">
@@ -97,8 +94,31 @@ export const printHighResInvoice = (invoice: Invoice, settings: StoreSettings) =
             طباعة: ${new Date().toLocaleTimeString()} ${new Date().toLocaleDateString('ar-SA')}
         </div>
       </div>
+      
+      ${invoice.note ? `
+        <div style="margin-top: 20px; padding: 10px; border: 1px solid #2E6F40; background-color: #F1F8E9; border-radius: 8px;">
+          <p style="margin: 0; font-size: 12px; color: #2E6F40; font-weight: bold;">ملاحظة للعميل:</p>
+          <p style="margin: 5px 0 0 0; font-size: 12px;">${invoice.note}</p>
+        </div>
+      ` : ''}
     </div>
   `;
+}
+
+export const printInvoice = (invoice: Invoice, settings: StoreSettings) => {
+  const element = document.createElement('div');
+  element.id = 'invoice-print-container';
+  element.innerHTML = getInvoiceHTML(invoice, settings);
+
+  document.body.appendChild(element);
+  window.print();
+  document.body.removeChild(element);
+};
+
+export const printHighResInvoice = (invoice: Invoice, settings: StoreSettings) => {
+  const element = document.createElement('div');
+  element.id = 'invoice-print-template';
+  element.innerHTML = getInvoiceHTML(invoice, settings);
   
   const options = { margin: 10, filename: `Invoice_${invoice.id}.pdf`, html2canvas: { scale: 3 }, jsPDF: { format: 'a4' } };
   html2pdf().set(options).from(element).save();
